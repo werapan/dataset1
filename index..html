@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Validation Problem</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="text"] { padding: 8px; width: 300px; }
+        button { padding: 10px 20px; cursor: pointer; }
+        /* Style สำหรับข้อความ error */
+        .error { color: red; font-size: 0.9em; margin-top: 5px; }
+        input.error { border: 1px solid red; }
+    </style>
+</head>
+<body>
+
+    <h1>ตัวอย่างฟอร์มที่มีปัญหา Validation</h1>
+    <p>โค้ดนี้จำลองปัญหาที่ "เหตุผล" (Comment) ถูกตั้งค่า `required: true` แต่ถูก `disabled` เมื่อเลือก "อนุญาต"</p>
+
+    <form id="approvalForm" action="#" method="post">
+        
+        <div class="form-group">
+            <label>การตัดสินใจ:</label>
+            <label><input type="radio" name="APPROVE" value="Y" checked> อนุญาต (Approve)</label>
+            <label><input type="radio" name="APPROVE" value="N"> ไม่อนุญาต (Reject)</label>
+        </div>
+
+        <div class="form-group">
+            <label for="COMMENT">เหตุผล (กรอกเฉพาะกรณีไม่อนุญาต):</label>
+            <input type="text" class="form-control" id="COMMENT" name="COMMENT" placeholder="เหตุผลที่ไม่อนุญาต" disabled>
+            <div id="comment-error-container"></div>
+        </div>
+
+        <button type="submit">ส่งข้อมูล (Submit)</button>
+    </form>
+
+    <script type="text/javascript" src="https://e-leave.buu.ac.th/frontend/plugins/jquery/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="https://e-leave.buu.ac.th/backend/plugins/validation/jquery.validate.js"></script>
+
+    <script>
+    $(document).ready(function() {
+
+        // --- Logic สำหรับเปิด/ปิดช่อง Comment ---
+        $('input[name="APPROVE"]').on('change', function() {
+            var decision = $(this).val();
+            if (decision === 'N') {
+                // ถ้าเลือก "ไม่อนุญาต" ให้เปิดช่อง Comment
+                $('#COMMENT').prop('disabled', false);
+            } else {
+                // ถ้าเลือก "อนุญาต" ให้ปิดช่อง Comment และล้างค่าทิ้ง
+                $('#COMMENT').prop('disabled', true);
+                $('#COMMENT').val(''); 
+                
+                // ล้าง error ที่อาจค้างอยู่
+                $('#approvalForm').validate().element('#COMMENT');
+            }
+        });
+
+
+        // --- Logic การ Validate ฟอร์ม (ส่วนที่เป็นปัญหา) ---
+        $("#approvalForm").validate({
+            rules: {
+                APPROVE: {
+                    required: true
+                },
+                // !!--- นี่คือจุดที่เป็นปัญหา ---!!
+                // เราตั้งกฎว่าช่อง COMMENT "จำเป็นต้องกรอกเสมอ"
+                COMMENT: {
+                    required: true
+                }
+            },
+            messages: {
+                COMMENT: {
+                    required: "กรุณาระบุเหตุผลที่ไม่อนุญาต"
+                }
+            },
+            // กำหนดให้ error ของ COMMENT ไปแสดงใน div ที่เตรียมไว้
+            errorPlacement: function(error, element) {
+                if (element.attr("name") == "COMMENT") {
+                    error.appendTo("#comment-error-container");
+                } else {
+                    error.insertAfter(element);
+                }
+            },
+            // ฟังก์ชันนี้จะทำงาน "ก็ต่อเมื่อ" ฟอร์มผ่านการ validate แล้วเท่านั้น
+            submitHandler: function(form) {
+                alert("✅ ฟอร์มผ่านการตรวจสอบ! กำลังส่งข้อมูล...");
+                // ในโปรเจกต์จริง บรรทัดนี้จะเป็น form.submit();
+            }
+        });
+
+    });
+    </script>
+
+</body>
+</html>
